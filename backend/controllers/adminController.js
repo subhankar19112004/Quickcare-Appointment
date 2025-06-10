@@ -15,6 +15,7 @@ const addDoctor = async (req, res) => {
         if (!name || !email || !password || !degree || !speciality || !experience || !about || !fees || !address || !imageFile) {
             return res.status(400).json({
                 "message": "All fields are required",
+                
                 "success": false
             })
         } 
