@@ -20,8 +20,8 @@ function App() {
 
       <ToastContainer
         position="top-right"
-        autoClose={2000} // Reduce the time the toast stays visible to 3 seconds
-        hideProgressBar={false} // Show the progress bar
+        autoClose={1000} // Reduce the time the toast stays visible to 3 seconds
+        hideProgressBar={true} // Show the progress bar
         newestOnTop={false}
         closeOnClick
         rtl={false}
