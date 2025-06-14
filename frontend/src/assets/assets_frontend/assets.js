@@ -32,10 +32,10 @@ import doc14 from './doc14.png'
 import doc15 from './doc15.png'
 import Dermatologist from './Dermatologist.svg'
 import Gastroenterologist from './Gastroenterologist.svg'
-import General_physician from './General_physician.svg'
+import General_Physician from './General_physician.svg'
 import Gynecologist from './Gynecologist.svg'
 import Neurologist from './Neurologist.svg'
-import Pediatricians from './Pediatricians.svg'
+import Pediatrician from './Pediatricians.svg'
 
 
 export const assets = {
@@ -60,8 +60,8 @@ export const assets = {
 
 export const specialityData = [
     {
-        speciality: 'General physician',
-        image: General_physician
+        speciality: 'General Physician',
+        image: General_Physician
     },
     {
         speciality: 'Gynecologist',
@@ -72,8 +72,8 @@ export const specialityData = [
         image: Dermatologist
     },
     {
-        speciality: 'Pediatricians',
-        image: Pediatricians
+        speciality: 'Pediatrician',
+        image: Pediatrician
     },
     {
         speciality: 'Neurologist',
