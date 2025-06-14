@@ -9,10 +9,21 @@ import MyAppointments from './pages/MyAppointments'
 import Appointment from './pages/Appointment'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const App = () => {
   return (
     <div className=' mx-5 sm:mx-[5%] '>
+      <ToastContainer
+        position="top-right"
+        autoClose={1000} // Reduce the time the toast stays visible to 3 seconds
+        hideProgressBar={true} // Show the progress bar
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        
+      />
       <Navbar/> 
       <Routes>
         <Route path='/' element={<Home/>}/>
