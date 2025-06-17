@@ -187,6 +187,74 @@ const updateProfile = async (req, res) => {
 };
 
 //API for booking appointment
+// const bookAppointment = async (req, res) => {
+//   try {
+//     const { userId, docId, slotDate, slotTime } = req.body;
+//     const docData = await doctorModel.findById(docId).select("-password");
+
+//     if (!docData.available) {
+//       return res.status(404).json({
+//         message: "No appointments available for this doctor",
+//         success: false,
+//       });
+//     }
+
+//     let slots_booked = docData.slots_booked;
+//     // checking for slots availability
+//     if(slots_booked[slotDate]) {
+//       if(slots_booked[slotDate].includes(slotTime)) {
+//         return res.status(400).json({
+//           message: "Slot already booked for this time",
+//           success: false,
+//         });
+//       } else{
+//         slots_booked[slotDate].push(slotTime);
+//       }
+//     } else{
+//       slots_booked[slotDate] = [];
+//       slots_booked[slotDate].push(slotTime);
+//     }
+
+//     const userData = await userModel.findById(userId).select("-password");
+//     delete docData.slots_booked;
+
+//     const appointmentData = {
+//       userId,
+//       docId,
+//       slotDate,
+//       slotTime,
+//       userData,
+//       docData,
+//       amount: docData.fees,
+//       date:Date.now()
+//     };
+
+//     const newAppointment = new appointmentModel(appointmentData);
+    
+
+//     await newAppointment.save();
+//     //save new slots data in docdata
+//     await doctorModel.findByIdAndUpdate(docId, {
+//       slots_booked,
+//     });
+
+//     res.status(200).json({
+//       message: "Appointment booked successfully",
+//       success: true,
+//       newAppointment,
+//     });
+
+
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({
+//       message: "Something went wrong",
+//       error,
+//       success: false,
+//     });
+//   }
+// }
+
 const bookAppointment = async (req, res) => {
   try {
     const { userId, docId, slotDate, slotTime } = req.body;
@@ -195,22 +263,22 @@ const bookAppointment = async (req, res) => {
     if (!docData.available) {
       return res.status(404).json({
         message: "No appointments available for this doctor",
-        success: false,
+        success: false
       });
     }
 
     let slots_booked = docData.slots_booked;
     // checking for slots availability
-    if(slots_booked[slotDate]) {
-      if(slots_booked[slotDate].includes(slotTime)) {
+    if (slots_booked[slotDate]) {
+      if (slots_booked[slotDate].includes(slotTime)) {
         return res.status(400).json({
           message: "Slot already booked for this time",
-          success: false,
+          success: false
         });
-      } else{
+      } else {
         slots_booked[slotDate].push(slotTime);
       }
-    } else{
+    } else {
       slots_booked[slotDate] = [];
       slots_booked[slotDate].push(slotTime);
     }
@@ -226,33 +294,31 @@ const bookAppointment = async (req, res) => {
       userData,
       docData,
       amount: docData.fees,
-      date:Date.now()
+      date: Date.now()
     };
 
     const newAppointment = new appointmentModel(appointmentData);
-    
 
     await newAppointment.save();
-    //save new slots data in docdata
+    // save new slots data in docdata
     await doctorModel.findByIdAndUpdate(docId, {
-      slots_booked,
+      slots_booked
     });
 
     res.status(200).json({
       message: "Appointment booked successfully",
       success: true,
-      newAppointment,
+      newAppointment
     });
-
 
   } catch (error) {
     console.log(error);
     res.status(500).json({
       message: "Something went wrong",
       error,
-      success: false,
+      success: false
     });
   }
-}
+};
 
 export {registerUser, loginUser, getProfile, updateProfile, bookAppointment};
