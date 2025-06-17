@@ -122,6 +122,8 @@ const allDoctors = async (req, res) => {
     }
 }
 
+// API to get all users list for admin
+
 
 
 export { addDoctor, loginAdmin, allDoctors  };
