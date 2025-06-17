@@ -1,8 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { AppContext } from '../context/AppContext';
 import { assets } from '../assets/assets_frontend/assets';
 import RelatedDoctors from '../components/RelatedDoctors';
+import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const Appointment = () => {
 
@@ -11,13 +13,13 @@ const Appointment = () => {
   const [docSlots, setDocSlots] = useState([]);
   const [slotIndex, setSlotIndex] = useState(0);
   const [slotTime, setSlotTime] = useState('');
-  const { doctors, currencySymbol } = useContext(AppContext);
+  const navigate = useNavigate();
+  const { doctors, currencySymbol, backendUrl, token, userData, getDoctorsData } = useContext(AppContext);
   const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
   const fetchDocInfo = async () => {
     const docInfo = await doctors.find(doc => doc._id === docId);
     setDocInfo(docInfo);
-
   }
 
   const getAvailableSlots = async () => {
@@ -49,6 +51,15 @@ const Appointment = () => {
       while (currentdate < endTime) {
         let formattedTime = currentdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+        let day = currentdate.getDay();
+        let month = currentdate.getMonth() + 1;
+        let year = currentdate.getFullYear();
+
+        const slotDate = day + "-" + month + "-" + year;
+        const slotTime = formattedTime;
+
+        
+
         // add slot to array
         timeSlots.push({
           dateTime: new Date(currentdate),
@@ -57,10 +68,46 @@ const Appointment = () => {
 
         // increment date
         currentdate.setMinutes(currentdate.getMinutes() + 30);
-
       }
 
       setDocSlots(prev => [...prev, timeSlots]);
+    }
+  }
+
+  const bookAppointment = async () => {
+    try {
+      if (!token) {
+        toast.error('Please login to book an appointment');
+        return navigate('/login');
+      }
+      const date = docSlots[slotIndex][0].dateTime;
+      let day = date.getDate();
+      let month = date.getMonth() + 1;
+      let year = date.getFullYear();
+
+      const slotDate = day + "-" + month + "-" + year;
+
+      const { data } = await axios.post(backendUrl + '/api/user/book-appointment', {
+        userId: userData._id,  // Add the userId here
+        docId,
+        slotDate,
+        slotTime
+      }, {
+        headers: {
+          token
+        }
+      })
+
+      if (data.success) {
+        toast.success(data.message || 'Appointment Booked Successfully');
+        getDoctorsData();
+        navigate('/my-appointments');
+      } else {
+        toast.error(data.message || 'Something went wrong');
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error( error?.response?.data?.message || 'Try again later');
     }
   }
 
@@ -74,7 +121,6 @@ const Appointment = () => {
 
   useEffect(() => {
     console.log(docSlots);
-
   }, [docSlots])
 
   return docInfo && (
@@ -85,7 +131,7 @@ const Appointment = () => {
           <img className='bg-violet-500 w-full sm:max-w-72 rounded-lg ' src={docInfo?.image} alt={docInfo?.name} />
         </div>
         <div className=' flex-1 border border-gray-400 rounded-lg p-8 py-7  bg-white mx-2 sm:mx-0 mt-[-80px] sm:mt-0'>
-          {/** ~~~~~~~~~~~~~~ Doc Info : name, degree, experience ------------ */}
+          {/* ~~~~~~~~~~~~~~ Doc Info : name, degree, experience ------------ */}
           <p className='flex items-center gap-2 text-2xl font-medium text-gray-900'>
             {docInfo?.name}
             <img className='w-5' src={assets?.verified_icon} />
@@ -131,13 +177,13 @@ const Appointment = () => {
             ))
           }
         </div>
-        <button className=' bg-violet-500 text-white px-12 py-3 rounded-full mt-10 shadow-xl/50 shadow-violet-500 hover:shadow-none  transition-all duration-300 '>Book an appointment</button>
+        <button onClick={bookAppointment} className=' bg-violet-500 text-white px-12 py-3 rounded-full mt-10 shadow-xl/50 shadow-violet-500 hover:shadow-none  transition-all duration-300 '>Book an appointment</button>
       </div>
 
       {/* Related doctors */}
-      <RelatedDoctors docId = {docId} speciality={docInfo?.speciality} />
+      <RelatedDoctors docId={docId} speciality={docInfo?.speciality} />
     </div>
   )
 }
 
-export default Appointment
+export default Appointment;
