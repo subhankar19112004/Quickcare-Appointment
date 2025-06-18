@@ -316,29 +316,7 @@ const cancelAppointments = async (req, res) => {
     });
   }
 }
-// const cancelAppointments = async (req, res) => {
-//   try {
-//     const { appointmentId } = req.body;  // Expect both appointmentId and userId
-//     const userId = req.userId;
-//     const appointmentData = await appointmentModel.findById(appointmentId);
-//     console.log("Request data:", { appointmentId, userId });
 
-//     if (appointmentData.userId !== userId) {
-//       return res.status(400).json({
-//         message: "You can only cancel your own appointments",
-//         success: false
-//       });
-//     }
-
-//     // Proceed with canceling the appointment
-//     await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true });
-//     res.status(200).json({ message: "Appointment cancelled successfully", success: true });
-
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({ message: "Something went wrong", success: false });
-//   }
-// };
 
 
 
