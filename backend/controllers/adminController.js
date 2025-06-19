@@ -3,6 +3,8 @@ import validator from "validator";
 import { v2 as cloudinary } from "cloudinary";
 import doctorModel from "../models/doctorModel.js";
 import jwt from "jsonwebtoken";
+import appointmentModel from "../models/appointmentModel.js";
+import userModel from "../models/userModel.js";
 // API for adding doctors
 const addDoctor = async (req, res) => {
     try {
@@ -124,6 +126,88 @@ const allDoctors = async (req, res) => {
 
 // API to get all users list for admin
 
+// API to get all appointments
+const appointmentsAdmin = async ( req, res) => {
+    try {
+        const appointments = await appointmentModel.find({})
+        res.json({
+            success: true,
+            totalAppointments: appointments.length,
+            appointments
+        })
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            message: "Something went wrong",
+            error,
+            success: false
+        })
+    }
+}
+
+//API to cancel the appointment from admin panel
+const appointmentCancel = async (req, res) => {
+  try {
+    const { appointmentId } = req.body;
+    const appointmentData = await appointmentModel.findById(appointmentId);
+   
+    await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true });
+
+    //releasing doctor slot
+    const { docId, slotDate, slotTime } = appointmentData;
+    const docData = await doctorModel.findById(docId);
+    let slots_booked = docData.slots_booked;
+    slots_booked[slotDate] = slots_booked[slotDate].filter(slot => slot !== slotTime);
+
+    await doctorModel.findByIdAndUpdate(docId, {
+      slots_booked
+    })
+    res.status(200).json({
+      message: "Appointment cancelled successfully",
+      success: true
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Something went wrong",
+      error,
+      success: false
+    });
+  }
+}
+
+//API to get dashboard data for admin panel
+const adminDashboard = async (req, res) => {
+    try {
+        const doctors = await doctorModel.find({});
+        const appointments = await appointmentModel.find({});
+        const users = await userModel.find({});
+
+        const dashData = {
+            doctors: doctors.length,
+            appointments: appointments.length,
+            users: users.length,
+            latestAppointments: appointments.reverse().slice(0, 5),
+            revenue: appointments.reduce((acc, curr) => acc + curr.fees, 0)
+        }
 
 
-export { addDoctor, loginAdmin, allDoctors  };
+        res.json({
+            success: true,
+            dashData
+            
+        })
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            message: "Something went wrong",
+            success: false,
+            error
+        })
+    }
+}
+
+
+
+export { addDoctor, loginAdmin, allDoctors, appointmentsAdmin, appointmentCancel, adminDashboard  };
