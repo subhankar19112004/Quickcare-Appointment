@@ -1,14 +1,15 @@
 import React, { useContext, useState } from 'react'
-import { assets } from "../assets/assets_admin/assets.js"
 import { AdminContext } from '../context/adminContext.jsx';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { useNavigate } from "react-router";
 
 const Login = () => {
     const [state, setState] = useState('Admin');
     const [email, setEmail] = useState('admin@quickcare.com');
     const [password, setPassword] = useState('Admin@123');
     const { setAToken, backendUrl } = useContext(AdminContext);
+    const navigate = useNavigate();
 
 
 const onSubmitHandler = async (event) => {
@@ -31,6 +32,7 @@ const onSubmitHandler = async (event) => {
                 localStorage.setItem('aToken', data.token);
                 setAToken(data.token);
                 toast.success('Login successful!');  // Display success message
+                navigate('/admin-dashboard');  // Redirect to admin page
             } else {
                 // Display the message from the server response in the toast
                 toast.error(data.message || 'Login failed!');  // Show the error message from the backend
