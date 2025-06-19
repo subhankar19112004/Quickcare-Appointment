@@ -1,4 +1,3 @@
-
 // import React, { useState, useEffect, useContext } from 'react';
 // import { AppContext } from '../context/AppContext';
 // import axios from 'axios';
@@ -16,6 +15,60 @@
 //   const slotDateFormat = (slotDate) => {
 //     const dateArray = slotDate.split('-');
 //     return dateArray[0] + ' ' + months[Number(dateArray[1] - 1)] + ' ' + dateArray[2];
+//   };
+
+//   const getAppointmentStatus = (item) => {
+//     const [day, month, year] = item.slotDate.split('-');
+//     const [time, meridian] = item.slotTime.split(' ');
+//     const [hours, minutes] = time.split(':');
+
+//     let hour24 = parseInt(hours);
+//     if (meridian.toLowerCase() === 'pm' && hour24 < 12) hour24 += 12;
+//     if (meridian.toLowerCase() === 'am' && hour24 === 12) hour24 = 0;
+
+//     const appointmentDateTime = new Date(
+//       parseInt(year),
+//       parseInt(month) - 1,
+//       parseInt(day),
+//       hour24,
+//       parseInt(minutes)
+//     );
+
+//     const now = new Date();
+
+//     if (now > appointmentDateTime) {
+//       return item.isCompleted ? 'Completed ✅' : 'Expired ❌';
+//     }
+
+//     return 'Upcoming 🕒';
+//   };
+
+//   const getCountdown = (item) => {
+//     const [day, month, year] = item.slotDate.split('-');
+//     const [time, meridian] = item.slotTime.split(' ');
+//     const [hours, minutes] = time.split(':');
+
+//     let hour24 = parseInt(hours);
+//     if (meridian.toLowerCase() === 'pm' && hour24 < 12) hour24 += 12;
+//     if (meridian.toLowerCase() === 'am' && hour24 === 12) hour24 = 0;
+
+//     const appointmentDateTime = new Date(
+//       parseInt(year),
+//       parseInt(month) - 1,
+//       parseInt(day),
+//       hour24,
+//       parseInt(minutes)
+//     );
+
+//     const diff = appointmentDateTime.getTime() - new Date().getTime();
+
+//     if (diff <= 0) return null;
+
+//     const totalMinutes = Math.floor(diff / (1000 * 60));
+//     const hoursLeft = Math.floor(totalMinutes / 60);
+//     const minutesLeft = totalMinutes % 60;
+
+//     return `${hoursLeft}h ${minutesLeft}m left`;
 //   };
 
 //   const getUserAppointments = async () => {
@@ -66,7 +119,6 @@
 //       order_id: order.id,
 //       reciept: order.receipt,
 //       handler: async (response) => {
-//         console.log(response);
 //         try {
 //           const { data } = await axios.post(backendUrl + '/api/user/verify-razorpay', response, {
 //             headers: { token },
@@ -94,7 +146,6 @@
 //         { headers: { token } }
 //       );
 //       if (data?.success) {
-//         console.log(data?.order);
 //         initPay(data?.order);
 //       }
 //     } catch (error) {
@@ -121,22 +172,37 @@
 //         <div className="space-y-8">
 //           {appointments.map((item, index) => {
 //             const isCancelled = item.cancelled;
-//             const isCompleted = item.status === 'Completed';
+//             const isCompleted = item.isCompleted;
 //             const isPaid = item.payment;
+//             const status = getAppointmentStatus(item);
 
 //             return (
 //               <div
 //                 key={index}
-//                 className="relative bg-white/60 backdrop-blur-lg shadow-lg border border-gray-300 rounded-xl p-6 flex flex-col lg:flex-row items-center gap-6 transition-all duration-300 hover:shadow-2xl"
+//                 className={`relative bg-white/60 backdrop-blur-lg shadow-lg border ${
+//                   status === 'Completed ✅'
+//                     ? 'border-green-400'
+//                     : status === 'Expired ❌'
+//                     ? 'border-red-400'
+//                     : 'border-gray-300'
+//                 } rounded-xl p-6 flex flex-col lg:flex-row items-center gap-6 transition-all duration-300 hover:shadow-2xl`}
 //               >
 //                 {/* Status Tag */}
-//                 <div className="absolute top-4 right-4">
-//                   {isCancelled ? (
-//                     <span className="px-3 py-1 rounded-full bg-red-100 text-red-600 text-xs font-semibold">Cancelled</span>
-//                   ) : isCompleted ? (
-//                     <span className="px-3 py-1 rounded-full bg-green-100 text-green-600 text-xs font-semibold">Completed</span>
-//                   ) : (
-//                     <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-600 text-xs font-semibold">Upcoming</span>
+//                 <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
+//                   <span
+//                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
+//                       status === 'Upcoming 🕒'
+//                         ? 'bg-blue-100 text-blue-600'
+//                         : status === 'Completed ✅'
+//                         ? 'bg-green-100 text-green-600'
+//                         : 'bg-red-100 text-red-600'
+//                     }`}
+//                   >
+//                     {status}
+//                   </span>
+
+//                   {status === 'Upcoming 🕒' && (
+//                     <span className="text-xs text-gray-600 mr-4 font-medium">{getCountdown(item)}</span>
 //                   )}
 //                 </div>
 
@@ -174,7 +240,7 @@
 //                       <p><span className="font-semibold">Phone:</span> {item?.userData?.phone}</p>
 //                     </div>
 //                     <div>
-//                       <p><span className="font-semibold">Doctor Exp:</span> {item?.docData?.experience} yrs</p>
+//                       <p><span className="font-semibold">Doctor Exp:</span> {item?.docData?.experience}</p>
 //                       <p><span className="font-semibold">Clinic:</span> {item?.docData?.address?.line1}</p>
 //                       <p className="text-xs">{item?.docData?.address?.line2}</p>
 //                     </div>
@@ -190,22 +256,24 @@
 //                 </div>
 
 //                 {/* Action Buttons */}
-//                 <div className="flex flex-col gap-2 w-full sm:w-auto">
+//                 <div className="flex flex-col gap-2 w-full sm:w-auto lg:mt-5">
 //                   {/* Pay Button */}
 //                   <button
 //                     onClick={() => appointmentRazorpay(item?._id)}
-//                     className={`relative overflow-hidden py-2 px-4 rounded-full border group ${item.payment || isCancelled || isCompleted
+//                     className={`relative overflow-hidden py-2 px-4 rounded-full border group ${
+//                       isPaid || isCancelled || isCompleted
 //                         ? 'text-green-600 border-green-400 bg-green-100 cursor-not-allowed'
 //                         : 'text-gray-900 border-gray-500'
-//                       }`}
-//                     disabled={item.payment || isCancelled || isCompleted}
+//                     }`}
+//                     disabled={isPaid || isCancelled || isCompleted}
 //                   >
 //                     <span
-//                       className={`absolute inset-0 scale-x-0 origin-left transition-transform duration-300 ${!(item.payment || isCancelled || isCompleted) && 'bg-green-200 group-hover:scale-x-100'
-//                         }`}
+//                       className={`absolute inset-0 scale-x-0 origin-left transition-transform duration-300 ${
+//                         !(isPaid || isCancelled || isCompleted) && 'bg-green-200 group-hover:scale-x-100'
+//                       }`}
 //                     ></span>
 //                     <span className="relative z-10 group-hover:text-black">
-//                       {item.payment ? 'Paid ✅' : 'Pay Online'}
+//                       {isPaid ? 'Paid ✅' : 'Pay Online'}
 //                     </span>
 //                   </button>
 
@@ -213,19 +281,20 @@
 //                   <button
 //                     onClick={() => cancelAppointment(item?._id)}
 //                     disabled={isCancelled || isCompleted}
-//                     className={`relative overflow-hidden py-2 px-4 rounded-full border group ${isCancelled || isCompleted
+//                     className={`relative overflow-hidden py-2 px-4 rounded-full border group ${
+//                       isCancelled || isCompleted
 //                         ? 'text-gray-400 border-gray-300 cursor-not-allowed bg-gray-100'
 //                         : 'text-gray-900 border-gray-500'
-//                       }`}
+//                     }`}
 //                   >
 //                     <span
-//                       className={`absolute inset-0 scale-x-0 origin-left transition-transform duration-300 ${!(isCancelled || isCompleted) && 'bg-red-300 group-hover:scale-x-100'
-//                         }`}
+//                       className={`absolute inset-0 scale-x-0 origin-left transition-transform duration-300 ${
+//                         !(isCancelled || isCompleted) && 'bg-red-300 group-hover:scale-x-100'
+//                       }`}
 //                     ></span>
 //                     <span className="relative z-10 group-hover:text-black">Cancel Appointment</span>
 //                   </button>
 //                 </div>
-
 //               </div>
 //             );
 //           })}
@@ -259,6 +328,8 @@ const MyAppointments = () => {
   };
 
   const getAppointmentStatus = (item) => {
+    if (item.cancelled) return 'Cancelled ❌';
+
     const [day, month, year] = item.slotDate.split('-');
     const [time, meridian] = item.slotTime.split(' ');
     const [hours, minutes] = time.split(':');
@@ -285,6 +356,8 @@ const MyAppointments = () => {
   };
 
   const getCountdown = (item) => {
+    if (item.cancelled) return null;
+
     const [day, month, year] = item.slotDate.split('-');
     const [time, meridian] = item.slotTime.split(' ');
     const [hours, minutes] = time.split(':');
@@ -302,7 +375,6 @@ const MyAppointments = () => {
     );
 
     const diff = appointmentDateTime.getTime() - new Date().getTime();
-
     if (diff <= 0) return null;
 
     const totalMinutes = Math.floor(diff / (1000 * 60));
@@ -330,7 +402,11 @@ const MyAppointments = () => {
 
   const cancelAppointment = async (appointmentId) => {
     try {
-      setAppointments((prev) => prev.filter((item) => item._id !== appointmentId));
+      setAppointments((prev) =>
+        prev.map((item) =>
+          item._id === appointmentId ? { ...item, cancelled: true } : item
+        )
+      );
       const { data } = await axios.post(
         backendUrl + '/api/user/cancel-appointment',
         { appointmentId },
@@ -361,9 +437,11 @@ const MyAppointments = () => {
       reciept: order.receipt,
       handler: async (response) => {
         try {
-          const { data } = await axios.post(backendUrl + '/api/user/verify-razorpay', response, {
-            headers: { token },
-          });
+          const { data } = await axios.post(
+            backendUrl + '/api/user/verify-razorpay',
+            response,
+            { headers: { token } }
+          );
           if (data?.success) {
             toast.success(data?.message || 'Payment verified successfully');
             getUserAppointments();
@@ -412,29 +490,28 @@ const MyAppointments = () => {
       {appointments.length > 0 ? (
         <div className="space-y-8">
           {appointments.map((item, index) => {
+            const status = getAppointmentStatus(item);
+            const isPaid = item.payment;
             const isCancelled = item.cancelled;
             const isCompleted = item.isCompleted;
-            const isPaid = item.payment;
-            const status = getAppointmentStatus(item);
 
             return (
               <div
                 key={index}
-                className={`relative bg-white/60 backdrop-blur-lg shadow-lg border ${
-                  status === 'Completed ✅'
+                className={`relative bg-white/60 backdrop-blur-lg shadow-lg border rounded-xl p-6 flex flex-col lg:flex-row items-center gap-6 transition-all duration-300 hover:shadow-2xl ${
+                  status.includes('Completed')
                     ? 'border-green-400'
-                    : status === 'Expired ❌'
+                    : status.includes('Expired') || status.includes('Cancelled')
                     ? 'border-red-400'
                     : 'border-gray-300'
-                } rounded-xl p-6 flex flex-col lg:flex-row items-center gap-6 transition-all duration-300 hover:shadow-2xl`}
+                }`}
               >
-                {/* Status Tag */}
                 <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      status === 'Upcoming 🕒'
+                      status.includes('Upcoming')
                         ? 'bg-blue-100 text-blue-600'
-                        : status === 'Completed ✅'
+                        : status.includes('Completed')
                         ? 'bg-green-100 text-green-600'
                         : 'bg-red-100 text-red-600'
                     }`}
@@ -442,8 +519,10 @@ const MyAppointments = () => {
                     {status}
                   </span>
 
-                  {status === 'Upcoming 🕒' && (
-                    <span className="text-xs text-gray-600 mr-4 font-medium">{getCountdown(item)}</span>
+                  {!status.includes('Cancelled') && status.includes('Upcoming') && (
+                    <span className="text-xs text-gray-600 font-medium">
+                      {getCountdown(item)}
+                    </span>
                   )}
                 </div>
 
@@ -498,7 +577,6 @@ const MyAppointments = () => {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-2 w-full sm:w-auto lg:mt-5">
-                  {/* Pay Button */}
                   <button
                     onClick={() => appointmentRazorpay(item?._id)}
                     className={`relative overflow-hidden py-2 px-4 rounded-full border group ${
@@ -518,7 +596,6 @@ const MyAppointments = () => {
                     </span>
                   </button>
 
-                  {/* Cancel Button */}
                   <button
                     onClick={() => cancelAppointment(item?._id)}
                     disabled={isCancelled || isCompleted}
@@ -548,3 +625,4 @@ const MyAppointments = () => {
 };
 
 export default MyAppointments;
+
