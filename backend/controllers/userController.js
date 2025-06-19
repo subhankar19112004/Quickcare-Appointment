@@ -5,125 +5,126 @@ import jwt from "jsonwebtoken";
 import { v2 as cloudinary } from "cloudinary";
 import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
+import razorpay from "razorpay";
 
 // Api to register user
- const registerUser = async ( req, res) => {
-    try {
-        const  {name, email, password}  = req.body;
-        if(!name || !email || !password) {
-            return res.status(400).json({
-                message: "All fields are required",
-                success: false
-            })
-        }
-
-        if(!validator.isEmail(email)) {
-            return res.status(400).json({
-                message: "Email is not valid",
-                success: false
-            })
-        }
-
-        if(!validator.isStrongPassword(password)) {
-            return res.status(400).json({
-                message: "Password is not strong enough",
-                success: false
-            })
-        }
-
-        //hashing user password
-        const salt = await bcrypt.genSalt( 10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const userData = {
-            name,
-            email,
-            password: hashedPassword
-        }
-        const newUser = new userModel(userData);
-        const user = await newUser.save();
-        const token = jwt.sign({userId: user._id}, process.env.JWT_SECRET);
-
-        res.status(201).json({
-            message: "User registered successfully",
-            token: token,
-            success: true
-        })
-
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            message: "Something went wrong",
-            error,
-            success: false
-        })
+const registerUser = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        message: "All fields are required",
+        success: false
+      })
     }
- }
 
- //Api for login
- const loginUser = async (req, res) => {
-    try {
-        const {email, password} = req.body;
-
-        if(!email || !password) {
-            return res.status(400).json({
-                message: "cannot login without email or password, be sure you have passed them both",
-                success: false
-            })
-        }
-
-        const user = await userModel.findOne({email});
-        if(!user) {
-            return res.status(400).json({
-                message: "User not found",
-                success: false
-            })
-        }
-        const isMatch = await bcrypt.compare(password, user.password);
-        if(!isMatch) {
-            return res.status(400).json({
-                message: "Invalid credentials",
-                success: false
-            })
-        }
-        const token = jwt.sign({userId: user._id}, process.env.JWT_SECRET);
-        res.status(200).json({
-            message: "User logged in successfully",
-            loggedInUserName: user.name,
-            loggedInUserEmail: user.email,
-            token: token,
-            success: true
-        })
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            message: "Something went wrong",
-            error,
-            success: false
-        })
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({
+        message: "Email is not valid",
+        success: false
+      })
     }
- }
 
- //Api to get user profile data
+    if (!validator.isStrongPassword(password)) {
+      return res.status(400).json({
+        message: "Password is not strong enough",
+        success: false
+      })
+    }
+
+    //hashing user password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const userData = {
+      name,
+      email,
+      password: hashedPassword
+    }
+    const newUser = new userModel(userData);
+    const user = await newUser.save();
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
+
+    res.status(201).json({
+      message: "User registered successfully",
+      token: token,
+      success: true
+    })
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Something went wrong",
+      error,
+      success: false
+    })
+  }
+}
+
+//Api for login
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "cannot login without email or password, be sure you have passed them both",
+        success: false
+      })
+    }
+
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found",
+        success: false
+      })
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Invalid credentials",
+        success: false
+      })
+    }
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
+    res.status(200).json({
+      message: "User logged in successfully",
+      loggedInUserName: user.name,
+      loggedInUserEmail: user.email,
+      token: token,
+      success: true
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Something went wrong",
+      error,
+      success: false
+    })
+  }
+}
+
+//Api to get user profile data
 const getProfile = async (req, res) => {
-    try {
-        const userId = req.userId;  // ✅ take from middleware
+  try {
+    const userId = req.userId;  // ✅ take from middleware
 
-        const userData = await userModel.findById(userId).select("-password");
+    const userData = await userModel.findById(userId).select("-password");
 
-        res.status(200).json({
-            message: "User profile fetched successfully",
-            userData,
-            success: true
-        });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            message: "Something went wrong",
-            error,
-            success: false
-        });
-    }
+    res.status(200).json({
+      message: "User profile fetched successfully",
+      userData,
+      success: true
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Something went wrong",
+      error,
+      success: false
+    });
+  }
 }
 
 //API for updating the user profile
@@ -257,25 +258,25 @@ const bookAppointment = async (req, res) => {
 //API to get user appointments in frontend
 
 const listAppointment = async (req, res) => {
-    try {
-        console.log("Decoded User ID:", req.userId);  // Log the userId from the token
+  try {
+    console.log("Decoded User ID:", req.userId);  // Log the userId from the token
 
-        const appointments = await appointmentModel.find({ userId: req.userId }).populate('docId', 'name speciality image address');
-        
-         console.log("Appointments:", appointments);  // Check the fetched appointments
+    const appointments = await appointmentModel.find({ userId: req.userId }).populate('docId', 'name speciality image address');
 
-        res.json({
-            success: true,
-            appointments
-        });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            message: "Something went wrong",
-            error,
-            success: false
-        });
-    }
+    console.log("Appointments:", appointments);  // Check the fetched appointments
+
+    res.json({
+      success: true,
+      appointments
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Something went wrong",
+      error,
+      success: false
+    });
+  }
 };
 
 //API to cancel user appointments
@@ -291,7 +292,7 @@ const cancelAppointments = async (req, res) => {
         success: false
       });
     }
-    await appointmentModel.findByIdAndUpdate(appointmentId, {cancelled: true});
+    await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true });
 
     //releasing doctor slot
     const { docId, slotDate, slotTime } = appointmentData;
@@ -301,7 +302,7 @@ const cancelAppointments = async (req, res) => {
 
     await doctorModel.findByIdAndUpdate(docId, {
       slots_booked
-    }) 
+    })
     res.status(200).json({
       message: "Appointment cancelled successfully",
       success: true
@@ -317,8 +318,79 @@ const cancelAppointments = async (req, res) => {
   }
 }
 
+const razorpayInstance = new razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
+});
+
+// API to make payment of appointment using razorpay
+const paymentRazorpay = async (req, res) => {
+  try {
+    const { appointmentId } = req.body;
+    const appointmentData = await appointmentModel.findById(appointmentId);
+    if (!appointmentData) {
+      return res.status(404).json({
+        message: "Appointment not found",
+        success: false
+      });
+    }
+
+    //creating otions for payment
+    const options = {
+      amount: appointmentData.amount * 120 + 999,
+      currency: "INR",
+      receipt: appointmentId
+    };
+    const order = await razorpayInstance.orders.create(options);
+    res.json({
+      success: true,
+      order
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Something went wrong",
+      error,
+      success: false
+    });
+  }
+}
+
+//API to verify payment of razorpay
+const verifyRazorpay = async (req, res) => {
+  try {
+    const { razorpay_order_id } = req.body;
+    const orderInfo = await razorpayInstance.orders.fetch(razorpay_order_id);
+    console.log(orderInfo)
+    if( orderInfo.status === "paid" ) {
+      await appointmentModel.findByIdAndUpdate(orderInfo.receipt, {
+        payment: true
+      });
+      res.json({
+        success: true,
+        message: "Payment verified successfully"
+      })
+    } else{
+      return res.status(400).json({
+        message: "Payment not completed",
+        success: false
+      });
+    }
+    res.json({
+      success: true,
+      orderInfo
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Something went wrong",
+      error,
+      success: false
+    });
+  }
+}
 
 
 
 
-export {registerUser, loginUser, getProfile, updateProfile, bookAppointment, listAppointment, cancelAppointments};
+export { registerUser, loginUser, getProfile, updateProfile, bookAppointment, listAppointment, cancelAppointments, paymentRazorpay, verifyRazorpay };
