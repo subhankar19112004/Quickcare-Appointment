@@ -221,14 +221,14 @@ const UsersList = () => {
       {/* Modal: View User Profile */}
       {viewUser && (
         <motion.div
-          className="modal fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center"
+          className="modal fixed inset-0 bg-transparent backdrop-blur flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
           <motion.div
-            className="modal-content bg-white p-6 rounded-lg w-3/4 max-w-4xl h-[50vh] overflow-auto"
+            className="modal-content bg-white border-2 p-6 rounded-lg w-3/4 max-w-4xl h-[80vh] overflow-auto"
             initial={{ y: 100 }}
             animate={{ y: 0 }}
             exit={{ y: 100 }}
@@ -306,14 +306,14 @@ const UsersList = () => {
       {/* Modal: Edit User Profile */}
       {editUser && (
         <motion.div
-          className="modal fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center"
+          className="modal fixed inset-0 bg-transparent backdrop-blur flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
           <motion.div
-            className="modal-content bg-white p-6 rounded-lg"
+            className="modal-content bg-white border-2 p-6 rounded-lg"
             initial={{ y: 100 }}
             animate={{ y: 0 }}
             exit={{ y: 100 }}
@@ -375,14 +375,14 @@ const UsersList = () => {
       {/* Modal: Delete Confirmation */}
       {showDeleteModal && (
         <motion.div
-          className="modal fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center"
+          className="modal fixed inset-0 bg-transparent backdrop-blur  flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
           <motion.div
-            className="modal-content bg-white p-6 rounded-lg"
+            className="modal-content bg-white border-2 p-6 rounded-lg"
             initial={{ y: 100 }}
             animate={{ y: 0 }}
             exit={{ y: 100 }}
