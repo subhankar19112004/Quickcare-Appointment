@@ -124,7 +124,7 @@ const allDoctors = async (req, res) => {
     }
 }
 
-// API to get all users list for admin
+
 
 // API to get all appointments
 const appointmentsAdmin = async ( req, res) => {
@@ -178,36 +178,253 @@ const appointmentCancel = async (req, res) => {
 }
 
 //API to get dashboard data for admin panel
+// const adminDashboard = async (req, res) => {
+//     try {
+//         const doctors = await doctorModel.find({});
+//         const appointments = await appointmentModel.find({});
+//         const users = await userModel.find({});
+
+//         const dashData = {
+//             doctors: doctors.length,
+//             appointments: appointments.length,
+//             users: users.length,
+//             latestAppointments: appointments.reverse().slice(0, 5),
+//             revenue: appointments.reduce((acc, curr) => acc + curr.fees, 0)
+//         }
+
+
+//         res.json({
+//             success: true,
+//             dashData
+            
+//         })
+//     } catch (error) {
+//         console.log(error);
+//         res.status(500).json({
+//             message: "Something went wrong",
+//             success: false,
+//             error
+//         })
+//     }
+// }
+
 const adminDashboard = async (req, res) => {
     try {
         const doctors = await doctorModel.find({});
         const appointments = await appointmentModel.find({});
         const users = await userModel.find({});
 
+        // Initialize arrays to hold monthly data
+        const appointmentsByMonth = Array(12).fill(0); // Initialize 12 months
+        const feesByMonth = Array(12).fill(0); // Initialize fees for each month
+
+        // Helper function to convert DD-MM-YYYY to YYYY-MM-DD
+        const convertToDate = (dateString) => {
+            const [day, month, year] = dateString.split('-');
+            return new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
+        };
+
+        // Aggregate appointments and revenue (fees) by month
+        appointments.forEach((appointment) => {
+            const slotDate = convertToDate(appointment.slotDate); // Convert the date format
+            const month = slotDate.getMonth(); // Get month (0-11)
+            console.log(`Appointment Month: ${month}, Amount: ${appointment.amount}, Slot Date: ${slotDate}`);  // Debug: Log each appointment's month and amount
+            appointmentsByMonth[month]++;
+            feesByMonth[month] += appointment.amount; // Sum up the fees
+        });
+
+        console.log('Appointments by Month:', appointmentsByMonth); // Debug: Log the aggregated appointments
+        console.log('Fees by Month:', feesByMonth); // Debug: Log the aggregated fees
+
+        // Calculate total revenue from all appointments
+        const revenue = appointments.reduce((acc, curr) => acc + curr.amount, 0);
+
+        console.log('Total Revenue:', revenue); // Debug: Log total revenue calculation
+
+        // Users increase over the months
+        const usersByMonth = Array(12).fill(0); // Initialize 12 months for user growth
+        users.forEach((user) => {
+            const month = new Date(user.createdAt).getMonth();
+            usersByMonth[month]++;
+        });
+
+        console.log('Users by Month:', usersByMonth); // Debug: Log the aggregated users
+
+        // Prepare the dashboard data
         const dashData = {
             doctors: doctors.length,
             appointments: appointments.length,
             users: users.length,
             latestAppointments: appointments.reverse().slice(0, 5),
-            revenue: appointments.reduce((acc, curr) => acc + curr.fees, 0)
-        }
-
+            revenue,
+            appointmentsByMonth,
+            feesByMonth,
+            usersByMonth,
+        };
 
         res.json({
             success: true,
-            dashData
-            
-        })
+            dashData,
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            message: "Something went wrong",
+            success: false,
+            error,
+        });
+    }
+};
+// API to get all users list with appointments, total cost, and pagination
+const allUsersWithAppointments = async (req, res) => {
+    try {
+        const { page = 1, limit = 10 } = req.query; // pagination parameters
+
+        // Calculate the skip and limit for pagination
+        const skip = (page - 1) * limit;
+        const users = await userModel.find()
+            .skip(skip)
+            .limit(limit);
+
+        // Get total count of users for pagination
+        const totalUsers = await userModel.countDocuments();
+
+        // Fetch appointments and total cost for each user
+        const usersWithAppointments = await Promise.all(users.map(async (user) => {
+            const appointments = await appointmentModel.find({ userId: user._id });
+            const totalCost = appointments.reduce((acc, appointment) => acc + appointment.amount, 0);
+            return {
+                ...user.toObject(),
+                appointments,
+                totalCost
+            };
+        }));
+
+        res.json({
+            success: true,
+            totalUsers,
+            users: usersWithAppointments,
+            currentPage: page,
+            totalPages: Math.ceil(totalUsers / limit)
+        });
+
     } catch (error) {
         console.log(error);
         res.status(500).json({
             message: "Something went wrong",
             success: false,
             error
-        })
+        });
+    }
+}
+
+// API to update a user profile
+// API to update a user profile
+const updateUserProfile = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { phone, dob, gender, address, profilePic } = req.body; // Exclude name, email, and password from request body
+
+        // Ensure user exists
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false
+            });
+        }
+
+        // Update user details - Excluding name, email, and password
+        user.phone = phone || user.phone;
+        user.dob = dob || user.dob;
+        user.gender = gender || user.gender;
+        
+
+        await user.save();
+
+        res.json({
+            success: true,
+            message: "User profile updated successfully",
+            user
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            message: "Something went wrong",
+            success: false,
+            error
+        });
+    }
+};
+
+// API to delete a user
+const deleteUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // Ensure user exists
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false
+            });
+        }
+
+        // Delete user
+        await userModel.findByIdAndDelete(userId);
+
+        res.json({
+            success: true,
+            message: "User deleted successfully"
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            message: "Something went wrong",
+            success: false,
+            error
+        });
+    }
+}
+
+// API to view a user profile
+const viewUserProfile = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // Fetch user details
+        const user = await userModel.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                success: false
+            });
+        }
+
+        // Fetch appointments and total cost for user
+        const appointments = await appointmentModel.find({ userId: user._id });
+        const totalCost = appointments.reduce((acc, appointment) => acc + appointment.amount, 0);
+
+        res.json({
+            success: true,
+            user: {
+                ...user.toObject(),
+                appointments,
+                totalCost
+            }
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            message: "Something went wrong",
+            success: false,
+            error
+        });
     }
 }
 
 
 
-export { addDoctor, loginAdmin, allDoctors, appointmentsAdmin, appointmentCancel, adminDashboard  };
+
+export { addDoctor, loginAdmin, allDoctors, appointmentsAdmin, appointmentCancel, adminDashboard, allUsersWithAppointments, updateUserProfile, deleteUser, viewUserProfile };
