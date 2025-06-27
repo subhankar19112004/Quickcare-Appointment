@@ -11,6 +11,7 @@ import AllAppointments from './pages/Admin/AllAppointments';
 import DoctorsList from './pages/Admin/DoctorsList';
 import Adddoctor from './pages/Admin/Adddoctor';
 import UsersList from './pages/Admin/UsersList';
+import UserControllers from './pages/Admin/UserControllers'
 
 function App() {
 
@@ -36,12 +37,15 @@ function App() {
       <div className="flex items-start ">
         <Sidebar />
         <Routes>
-          <Route path='/' element={<Dashboard/>} />
-          <Route path='/admin-dashboard' element={<Dashboard/>} />
-          <Route path='/all-appointments' element={<AllAppointments/>} />
-          <Route path='/add-doctor' element={<Adddoctor/>} />
-          <Route path='/doctor-list' element={<DoctorsList/>} />
-          <Route path='/user-list' element={<UsersList/>} />
+          <Route path='/' element={<Dashboard />} />
+          <Route path='/admin-dashboard' element={<Dashboard />} />
+          <Route path='/all-appointments' element={<AllAppointments />} />
+          <Route path='/add-doctor' element={<Adddoctor />} />
+          <Route path='/doctor-list' element={<DoctorsList />} />
+          <Route path='/user-list' element={<UsersList />} />
+          <Route path='/user-control' element={<UserControllers />} />
+
+
 
         </Routes>
       </div>

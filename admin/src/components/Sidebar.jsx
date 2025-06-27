@@ -55,6 +55,16 @@ const Sidebar = () => {
             <img src={assets.people_icon} />
             <p>Users List</p>
           </NavLink>
+
+          <NavLink
+            className={({ isActive }) =>
+              `flex items-center gap-3 py-3 px-3 hover:bg-violet-100 transition-colors duration-100 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[#F2F3FF] text-gray-800 border-r-4 border-violet-400' : 'text-gray-800'}`
+            }
+            style={{ textDecoration: 'none' }}  // This removes the default underline
+            to={'/user-control'}>
+            <img src={assets.people_icon} />
+            <p>Users controls</p>
+          </NavLink>
         </ul>
       }
     </div>
