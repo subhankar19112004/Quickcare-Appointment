@@ -218,7 +218,16 @@ const bookAppointment = async (req, res) => {
     }
 
     const userData = await userModel.findById(userId).select("-password");
+    // Check if the user is blocked
+    if (userData.blockUntil && new Date(userData.blockUntil) > new Date()) {
+      return res.status(400).json({
+        message: "Your account is blocked. You cannot book appointments at this time.",
+        success: false
+      });
+    }
     delete docData.slots_booked;
+
+    
 
     const appointmentData = {
       userId,

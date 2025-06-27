@@ -5,50 +5,43 @@ import doctorModel from "../models/doctorModel.js";
 import jwt from "jsonwebtoken";
 import appointmentModel from "../models/appointmentModel.js";
 import userModel from "../models/userModel.js";
-import reviewModel from "../models/reviewModel.js"; // New review model
-import settingsModel from "../models/settingsModel.js";
-import Razorpay from "razorpay";
 
 
-const razorpayInstance = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET
-});
 
-// Add Patient (New API)
+//addPatient function
 const addPatient = async (req, res) => {
-    try {
+  try {
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({
         message: "All fields are required",
-        success: false
-      })
+        success: false,
+      });
     }
 
     if (!validator.isEmail(email)) {
       return res.status(400).json({
         message: "Email is not valid",
-        success: false
-      })
+        success: false,
+      });
     }
 
     if (!validator.isStrongPassword(password)) {
       return res.status(400).json({
         message: "Password is not strong enough",
-        success: false
-      })
+        success: false,
+      });
     }
 
-    //hashing user password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const userData = {
       name,
       email,
-      password: hashedPassword
-    }
+      password: hashedPassword,
+      available: true, // By default, user is available to book appointments
+    };
     const newUser = new userModel(userData);
     const user = await newUser.save();
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
@@ -56,222 +49,58 @@ const addPatient = async (req, res) => {
     res.status(201).json({
       message: "User registered successfully",
       token: token,
-      success: true
-    })
-
+      success: true,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({
       message: "Something went wrong",
       error,
-      success: false
-    })
+      success: false,
+    });
   }
 };
 
-// Add Review (New API)
-const addReview = async (req, res) => {
-    try {
-        const { doctorId, userId, review, rating } = req.body;
-
-        if (!review || !rating || !doctorId || !userId) {
-            return res.status(400).json({
-                message: "All fields are required",
-                success: false
-            });
-        }
-
-        const newReview = new reviewModel({ doctorId, userId, review, rating });
-        await newReview.save();
-
-        res.status(200).json({
-            message: "Review added successfully",
-            data: newReview
-        });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Something went wrong", success: false });
-    }
-};
-
-// List Reviews for Doctors (New API)
-const listReviews = async (req, res) => {
-    try {
-        const reviews = await reviewModel.find();
-        res.status(200).json({ success: true, reviews });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Something went wrong", success: false });
-    }
-};
-
-// Razorpay Payment (New API)
-const createPayment = async (req, res) => {
-    try {
-        const { amount, appointmentId } = req.body;
-
-        if (!amount || !appointmentId) {
-            return res.status(400).json({
-                message: "Amount and appointmentId are required",
-                success: false
-            });
-        }
-
-        const options = {
-            amount: amount * 199,  // Amount in paise
-            currency: "INR",
-            receipt: `receipt_${appointmentId}`
-        };
-
-        razorpayInstance.orders.create(options, (err, order) => {
-            if (err) {
-                return res.status(500).json({ message: "Error creating payment", success: false });
-            }
-
-            res.status(200).json({
-                success: true,
-                orderId: order.id,
-                amount: order.amount
-            });
-        });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Something went wrong", success: false });
-    }
-};
-
-// Handle Payment Success (New API)
-const handlePaymentSuccess = async (req, res) => {
-    try {
-        const { paymentId, appointmentId } = req.body;
-
-        const appointment = await appointmentModel.findById(appointmentId);
-        if (!appointment) {
-            return res.status(404).json({ message: "Appointment not found", success: false });
-        }
-
-        appointment.payment = true;
-        await appointment.save();
-
-        res.status(200).json({
-            message: "Payment successful",
-            success: true
-        });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Something went wrong", success: false });
-    }
-};
-
-// Refund Request (New API)
-const refundPayment = async (req, res) => {
-    try {
-        const { paymentId, appointmentId } = req.body;
-
-        // Logic to handle refund using Razorpay API (simplified)
-        razorpayInstance.payments.refund(paymentId, (err, refund) => {
-            if (err) {
-                return res.status(500).json({ message: "Error processing refund", success: false });
-            }
-
-            res.status(200).json({ message: "Refund processed", success: true });
-        });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Something went wrong", success: false });
-    }
-};
-// Update user status to active or inactive
-const updateUserStatus = async (req, res) => {
+// API to block/unblock a user
+// Admin API to block or unblock a user
+const blockUser = async (req, res) => {
   try {
-    const { userId, status } = req.body;
+    const { userId, blockDuration } = req.body; // blockDuration in days
 
-    // Ensure the status is valid (active/inactive)
-    if (status !== 'active' && status !== 'inactive') {
-      return res.status(400).json({ message: 'Invalid status value', success: false });
-    }
-
-    // Find and update the user
-    const user = await userModel.findByIdAndUpdate(userId, { status }, { new: true });
-
+    // Find the user to block
+    const user = await userModel.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: 'User not found', success: false });
+      return res.status(404).json({
+        message: "User not found",
+        success: false,
+      });
     }
+
+    let blockUntilDate = null;
+    if (blockDuration > 0) {
+      // Block the user for a specific number of days
+      blockUntilDate = new Date();
+      blockUntilDate.setDate(blockUntilDate.getDate() + blockDuration); // Add blockDuration days
+    }
+
+    // Update the user's blockUntil field
+    await userModel.findByIdAndUpdate(userId, { blockUntil: blockUntilDate });
 
     res.status(200).json({
-      message: `User status updated to ${status}`,
+      message: blockDuration > 0 
+        ? `User blocked successfully for ${blockDuration} days`
+        : "User unblocked successfully",
       success: true,
-      data: user,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Something went wrong', success: false });
+    console.log(error);
+    res.status(500).json({
+      message: "Something went wrong",
+      success: false,
+      error,
+    });
   }
 };
-
-
-// Content Management (New API)
-const updateContent = async (req, res) => {
-    try {
-        const { aboutUs, privacyPolicy, termsOfService } = req.body;
-
-        const existingContent = await settingsModel.findOne();
-        if (existingContent) {
-            existingContent.aboutUs = aboutUs || existingContent.aboutUs;
-            existingContent.privacyPolicy = privacyPolicy || existingContent.privacyPolicy;
-            existingContent.termsOfService = termsOfService || existingContent.termsOfService;
-            await existingContent.save();
-        } else {
-            const newContent = new settingsModel({ aboutUs, privacyPolicy, termsOfService });
-            await newContent.save();
-        }
-
-        res.status(200).json({ message: "Content updated successfully", success: true });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Something went wrong", success: false });
-    }
-};
-
-// Controller to update settings
-const updateSettings = async (req, res) => {
-    try {
-        const { websiteLogo, websiteTitle, contactInfo, smtpConfig, timeZone, currency } = req.body;
-
-        // Find if the settings exist, otherwise create a new one
-        const existingSettings = await settingsModel.findOne();
-        if (existingSettings) {
-            existingSettings.websiteLogo = websiteLogo || existingSettings.websiteLogo;
-            existingSettings.websiteTitle = websiteTitle || existingSettings.websiteTitle;
-            existingSettings.contactInfo = contactInfo || existingSettings.contactInfo;
-            existingSettings.smtpConfig = smtpConfig || existingSettings.smtpConfig;
-            existingSettings.timeZone = timeZone || existingSettings.timeZone;
-            existingSettings.currency = currency || existingSettings.currency;
-            await existingSettings.save();
-        } else {
-            const newSettings = new settingsModel({ 
-                websiteLogo,
-                websiteTitle,
-                contactInfo,
-                smtpConfig,
-                timeZone,
-                currency
-            });
-            await newSettings.save();
-        }
-
-        res.status(200).json({
-            message: "Settings updated successfully",
-            success: true
-        });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Something went wrong", success: false });
-    }
-};
-
-
-
 // API for adding doctors
 const addDoctor = async (req, res) => {
   try {
@@ -714,13 +543,5 @@ export {
   deleteUser,
   viewUserProfile,
   addPatient,
-  listPatients,
-  addReview,
-  listReviews,
-  createPayment,
-  handlePaymentSuccess,
-  refundPayment,
-  updateContent,
-  updateSettings,
-  updateUserStatus
+  blockUser
 };
