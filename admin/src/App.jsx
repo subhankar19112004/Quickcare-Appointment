@@ -12,11 +12,16 @@ import DoctorsList from './pages/Admin/DoctorsList';
 import Adddoctor from './pages/Admin/Adddoctor';
 import UsersList from './pages/Admin/UsersList';
 import UserControllers from './pages/Admin/UserControllers'
+import { DoctorContext } from './context/doctorContext';
+import DoctorDashboard from './pages/Doctor/DoctorDashboard';
+import DoctorAppointMent from './pages/Doctor/DoctorAppointMent';
+import DoctorProfile from './pages/Doctor/DoctorProfile';
 
 function App() {
 
   const { aToken } = useContext(AdminContext);
-  return aToken ? (
+  const { dToken } = useContext(DoctorContext);
+  return aToken || dToken ? (
     <div className=' bg-indigo-50'>
 
 
@@ -37,6 +42,7 @@ function App() {
       <div className="flex items-start ">
         <Sidebar />
         <Routes>
+          {/* Admin Routes */}
           <Route path='/' element={<Dashboard />} />
           <Route path='/admin-dashboard' element={<Dashboard />} />
           <Route path='/all-appointments' element={<AllAppointments />} />
@@ -44,6 +50,12 @@ function App() {
           <Route path='/doctor-list' element={<DoctorsList />} />
           <Route path='/user-list' element={<UsersList />} />
           <Route path='/user-control' element={<UserControllers />} />
+
+          {/* Doctor Routes */}
+          <Route path='/doctor-dashboard' element={<DoctorDashboard />} />
+          <Route path='/doctor-appointments' element={<DoctorAppointMent />} />
+          <Route path='/doctor-profile' element={<DoctorProfile />} />
+
 
 
 
