@@ -3,12 +3,14 @@ import { AdminContext } from '../context/adminContext.jsx';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from "react-router";
+import { DoctorContext } from '../context/doctorContext.jsx';
 
 const Login = () => {
     const [state, setState] = useState('Admin');
     const [email, setEmail] = useState('admin@quickcare.com');
     const [password, setPassword] = useState('Admin@123');
     const { setAToken, backendUrl } = useContext(AdminContext);
+    const { setDToken } = useContext(DoctorContext);
     const navigate = useNavigate();
 
 
@@ -33,6 +35,18 @@ const onSubmitHandler = async (event) => {
                 setAToken(data.token);
                 toast.success('Login successful!');  // Display success message
                 navigate('/admin-dashboard');  // Redirect to admin page
+            } else {
+                // Display the message from the server response in the toast
+                toast.error(data.message || 'Login failed!');  // Show the error message from the backend
+            }
+        } else {
+            const { data } = await axios.post( backendUrl + '/api/doctor/login', { email, password });
+            if( data.success ) {
+                localStorage.setItem('dToken', data.token);
+                setDToken(data.token);
+                toast.success('Login successful!');  
+                console.log(data.token)// Display success message
+                navigate('/doctor-dashboard');  // Redirect to admin page
             } else {
                 // Display the message from the server response in the toast
                 toast.error(data.message || 'Login failed!');  // Show the error message from the backend
